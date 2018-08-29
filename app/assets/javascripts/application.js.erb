@@ -29,7 +29,7 @@ class Song{
     if(name == "")
       this.url = "";
     else{
-      fetch("http://localhost:3000/api/v1/getvideourl/"+name)
+      fetch("https://boiling-lowlands-48913.herokuapp.com/api/v1/getvideourl/"+name)
         .then(response => response.json())
         .then((data) => {
           this.url = data.infos[0]["url"];
