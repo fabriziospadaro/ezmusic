@@ -1,0 +1,47 @@
+<div class="page-container">
+  <div class="header">
+
+    <div class="navbar-wrapper">
+      <div class="navbar-btn" id="user"></div>
+      <div class="navbar-btn" id="setting"></div>
+    </div>
+
+    <div class="title"></div>
+
+    <div class="control-wrapper">
+      <div class="control-btn" id="search"></div>
+      <div class="control-btn" id="playlist"></div>
+      <div class="control-btn" id="voice-off"></div>
+    </div>
+
+  </div>
+
+  <div class="player-wrapper">
+
+    <div class="track-info">
+      <h1 id="track-name">Come together</h1>
+    </div>
+
+    <div class="player-container">
+      <div id="player"></div>
+    </div>
+
+    <div class="time-info">
+      <p id="current-time">1.10</p>
+      <p id="total-time">2.30</p>
+    </div>
+    <div class="slidecontainer">
+      <input type="range" min="1" max="100" value="0" class="slider" id="myRange"
+      oninput="seekTo(this.value)" onchange="seekTo(this.value)" >
+    </div>
+  </div>
+
+  <div class="player-control-wrapper">
+    <div class="player-control-btn" id="previous"></div>
+    <div class="player-control-btn" id="play"></div>
+    <div class="player-control-btn" id="next"></div>
+  </div>
+
+</div>
+
+

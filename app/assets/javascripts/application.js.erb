@@ -1,0 +1,321 @@
+//= require p5.min
+//= require p5.speech
+
+let tag = document.createElement('script');
+tag.src = "https://www.youtube.com/iframe_api";
+let firstScriptTag = document.getElementsByTagName('script')[0];
+firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+let speechRec;
+let speech = new p5.Speech();
+speech.setLang('en-UK');
+speech.setVoice('Google UK English Female');
+
+let player;
+let lang = 'en-US';
+let botname = ["melody","multiplayer","melanie","malady"];
+let paused = true;
+
+class Song{
+
+  constructor(name) {
+    this.name = name;
+    this.url = "";
+    this.loadUrl(name);
+    this.done = false;
+    this.callback;
+  }
+
+  loadUrl(name){
+    if(name == "")
+      this.url = "";
+    else{
+      fetch("http://localhost:3000/api/v1/getvideourl/"+name)
+        .then(response => response.json())
+        .then((data) => {
+          this.url = data.infos[0]["url"];
+          this.name = data.infos[0]["name"];
+          if(this.callback)
+            this.callback();
+        });
+      }
+  }
+
+  isUrlReady(){
+    return this.url === "";
+  }
+
+  setCallback(call){
+    if(!this.isUrlReady())
+      this.callback = call;
+    else{
+      this.callback = call;
+      this.callback();
+    }
+  }
+}
+
+class PlayList{
+
+  constructor(on_play,on_pause){
+    this.songs = [];
+    this.current_song;
+    this.index = 0;
+    this.on_play = on_play;
+    this.on_pause = on_pause;
+    this.interval;
+  }
+
+  Add(song){
+    this.songs.push(song);
+  }
+
+  Play(song){
+    if(song.name != ""){
+      //add the new song to the playlist
+      this.Add(song);
+      //set the current song to the requested one
+      this.setCurrentSong(song);
+      speech.speak("Playing: " + this.current_song.name);
+    }
+    else
+      speech.speak("Hey!Give me the song name!");
+  }
+
+  setCurrentSong(song){
+      this.current_song = song;
+      //since we are playing a new song the current index is the index of the last song
+      this.index = this.songs.length;
+      //reset the done state
+      this.current_song.done = false;
+      this.current_song.setCallback(this.on_play);
+  }
+
+  PlayNext(){
+    if(this.index+1 < this.songs.length){
+      this.index++;
+      this.current_song.done = false;
+      this.current_song = this.songs[this.index];
+      this.Play(new Song(""));
+    }
+    else{
+      console.log("Reached the end of the playlist");
+    }
+
+  }
+
+  PlayPrevious(){
+    console.log("diocca");
+    if(this.index>0){
+      this.index--;
+      this.current_song.done = false;
+      this.current_song = this.songs[this.index];
+      this.Play(new Song(""));
+    }
+    else{
+      console.log("Reached the beginning of the playlist");
+    }
+  }
+
+}
+
+let playlist = new PlayList(playVideo,pauseVideo);
+
+
+function setup() {
+  noCanvas();
+
+  initSpeechRec();
+  startSpeechRec();
+
+  initPlayer();
+  window.setInterval(checkSongProgression,1000);
+
+  document.getElementById("previous").addEventListener("click", playlist.PlayPrevious);
+  document.getElementById("next").addEventListener("click", playlist.PlayNext);
+  document.getElementById("play").addEventListener("click", toggleVideo);
+}
+
+function initSpeechRec(){
+  speechRec = new p5.SpeechRec(lang,gotSpeech);
+  speechRec.continuous = true;
+  speechRec.rec.onend = errors;
+}
+
+function gotSpeech() {
+  if(speechRec.resultValue){
+    processSentence(speechRec.resultString);
+  }
+  else{
+    console.log("the fuck u said?");
+  }
+}
+
+
+function processSentence(sentence){
+  data = Process(sentence);
+
+  if(data.bot_called){
+    switch(data.verb){
+      case "play": playlist.Play(new Song(data.song_name)); break;
+      case "add": playlist.Add(new Song(data.song_name)); break;
+      case "stop": playlist.pauseVideo(); break;
+      case "next": playlist.PlayNext(); break;
+      case "back": playlist.PlayPrevious(); break;
+    }
+  }
+  else{
+    console.log(sentence);
+  }
+}
+
+function Process(string){
+  string = string.toLowerCase();
+  return data = {
+    bot_called : isBotCalled(string),
+    verb : processVerb(string),
+    song_name : extractSongName(string)
+  };
+}
+
+function isBotCalled(string){
+  let outcome = false;
+   //devo fare che se si prendono i 3/4 delle lettere del nome bot, lui risponde lo stess
+  botname.forEach(function(element) {
+    if(string.includes(element))
+      outcome = true;
+  });
+  return outcome;
+}
+
+verbs = ["stop","pause","next","skip","play","add","queue","start"];
+function processVerb(string){
+  if(string.includes("stop") || string.includes("pause"))
+    return "stop";
+  else if(string.includes("play") || string.includes("start"))
+    return "play";
+  else if(string.includes("add") || string.includes("queue"))
+    return "add";
+  else if(string.includes("next") || string.includes("skip"))
+    return "next";
+  else if(string.includes("previous") || string.includes("back"))
+    return "back";
+}
+
+function extractSongName(string){
+  //deve essere uguale al nome con cui l'ha chiamato
+  //string = string.replace(botname, "");
+  newString = string.split(firstVerbInString(string)).pop();
+  if(newString){
+    return newString.trim();
+  }
+  return "";
+}
+
+function firstVerbInString(string){
+  split_string = string.split(" ");
+  fond = "";
+  split_string.forEach(function(element) {
+    if(verbs.includes(element) && fond == "")
+      fond = element
+  });
+  return fond;
+}
+
+function errors(){
+  if(!playlist.current_song || playlist.current_song.done)
+    startSpeechRec();
+}
+
+function stopSpeechRec(){
+  speechRec.rec.stop();
+  if(document.getElementById("voice-on"))
+    document.getElementById("voice-on").id = 'voice-off';
+  console.log("Stopped listening owner");
+}
+
+function startSpeechRec(){
+  speechRec.rec.start();
+  if(document.getElementById("voice-off"))
+    document.getElementById("voice-off").id = 'voice-on';
+  console.log("Start listening owner");
+}
+
+function initPlayer(){
+  player = new YT.Player('player', {
+    height: '270',
+    width: '480',
+    videoId: "",
+    playerVars: {
+            controls: 0,
+            disablekb: 1
+        },
+    events: {
+      'onReady': onPlayerReady
+    }
+  });
+}
+
+function playVideo(){
+  if(paused){
+    paused = false;
+    document.getElementById("play").id = 'pause';
+    resumeVideo();
+  }
+  document.getElementById("track-name").innerHTML = playlist.current_song.name.substring(0,21)+"...";
+  player.loadVideoById(playlist.current_song.url,0);
+}
+
+
+function checkSongProgression(){
+  if(playlist.songs.length>0 && player && player.getCurrentTime() > 2 && player.getDuration() == player.getCurrentTime() && !playlist.current_song.done){
+    onSongFinish();
+    playlist.current_song.done = true;
+    playlist.PlayNext();
+  }
+  else if(player && playlist.songs.length>0){
+    document.getElementById("current-time").innerHTML = fmtMSS(Math.round(player.getCurrentTime()));
+    document.getElementById("total-time").innerHTML = fmtMSS(Math.round(player.getDuration() - player.getCurrentTime()));
+    document.getElementById("myRange").value = player.getCurrentTime() / player.getDuration() * 100;
+  }
+}
+
+function seekTo(a){
+  console.log(a);
+  console.log("seeking to:"+player.getDuration()*((a-1)/100));
+  player.seekTo(player.getDuration()*((a-1)/100), true);
+}
+
+function fmtMSS(s){return(s-(s%=60))/60+(9<s?':':':0')+s}
+
+
+function onSongFinish(){
+  console.log("finis playing the song");
+  startSpeechRec();
+}
+
+function onPlayerReady(e) {
+  player.setPlaybackQuality("small");
+}
+
+function pauseVideo(){
+  player.pauseVideo();
+  startSpeechRec();
+}
+
+function resumeVideo(){
+  player.playVideo()
+  stopSpeechRec();
+}
+
+function toggleVideo(){
+  if(!paused){
+    paused = true;
+    document.getElementById("pause").id = 'play';
+    pauseVideo();
+  }
+  else{
+    paused = false;
+    document.getElementById("play").id = 'pause';
+    resumeVideo();
+  }
+}

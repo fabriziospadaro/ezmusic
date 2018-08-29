@@ -1,0 +1,8 @@
+{
+  "name": "ezmusic",
+  "private": true,
+  "dependencies": {
+    "api-ai-javascript": "^2.0.0-beta.14",
+    "request": "^2.87.0"
+  }
+}

@@ -1,0 +1,186 @@
+body{
+  background-color: rgb(6, 13, 22);
+  font-family: 'Amaranth', sans-serif;
+  color: white;
+  font-size: 35px;
+}
+h1{
+  font-size: 50px;
+}
+h2{
+  font-size: 43px;
+}
+.navbar-wrapper{
+  display: flex;
+  position: relative;
+  top: 0;
+  left: 0;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.navbar-btn{
+  width: 140px;
+  height: 140px;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+#setting{
+  background-image: image-url("setting.png");
+}
+#user{
+  background-image: image-url("user.png");
+}
+
+.header{
+  background-size: 100%;
+  background-repeat: no-repeat;
+  background-image: image-url("divider.png");
+  height: 90vw;
+  width: 100%;
+}
+
+.title{
+  position: relative;
+  margin: auto;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-image: image-url("melody-logo.png");
+  height: 357px;
+  width: 614px;
+}
+
+.control-wrapper{
+  display: flex;
+  justify-content: space-evenly;
+  position: relative;
+  top: 180px;
+}
+
+.control-btn{
+  width: 175px;
+  height: 175px;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+#voice-on{
+  background-image: image-url("voice-on.png");
+}
+
+#voice-off{
+  background-image: image-url("voice-off.png");
+}
+
+#playlist{
+  background-image: image-url("playlist.png");
+  transform: translate(6px,-50px);
+}
+
+#search{
+  background-image: image-url("search.png");
+}
+
+
+.player-wrapper{
+  margin-bottom: 150px;
+}
+
+.track-info{
+  margin-bottom: 100px;
+  text-align: center;
+}
+
+#track-name{
+  margin-bottom: 0px;
+  margin-top: 5px;
+}
+#track-artist{
+  margin-bottom: 0px;
+  margin-top: 5px;
+}
+
+
+.player-control-wrapper{
+  position: absolute;
+  bottom: 0;
+  width: 80%;
+  margin-left: 10%;
+  display: flex;
+  justify-content: space-between;
+}
+
+.player-control-btn{
+  width: 150px;
+  height: 150px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  margin: auto;
+}
+
+.time-info{
+
+  display: flex;
+  width: 70%;
+  margin: auto;
+  justify-content: space-between;
+}
+
+#next{
+  background-image: image-url("next.png");
+}
+#previous{
+  background-image: image-url("previous.png");
+}
+#pause{
+  background-image: image-url("pause.png");
+}
+#play{
+  background-image: image-url("play.png");
+}
+
+.player-container{
+  margin-top: 20px;
+  margin: auto;
+  text-align: center;
+}
+.page-container{
+  position: relative;
+  height: 99vh;
+  width: 100%;
+  display:flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.slidecontainer {
+    width: 70%; /* Width of the outside container */
+    margin: auto;
+}
+
+/* The slider itself */
+.slider {
+    -webkit-appearance: none;  /* Override default CSS styles */
+    border-style: solid;
+    border-width: 4px;
+    border-color: rgb(11, 37, 70);
+    background-color: rgba(0,0,0,0);
+    appearance: none;
+    width: 100%; /* Full-width */
+    height: 25px; /* Specified height */
+    outline: none; /* Remove outline */
+    transition: opacity .2s;
+}
+
+/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none; /* Override default look */
+    appearance: none;
+    width: 74px;
+    height: 74px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-image: image-url("timepin.png");
+    cursor: pointer; /* Cursor on hover */
+}
+
