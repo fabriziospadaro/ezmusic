@@ -12,8 +12,8 @@ h2{
 }
 .navbar-wrapper{
   display: flex;
-  position: relative;
-  top: 0;
+  position: fixed;
+  top: 30px;
   left: 0;
   width: 100%;
   justify-content: space-between;
@@ -39,6 +39,8 @@ h2{
   background-image: image-url("divider.png");
   height: 90vw;
   width: 100%;
+  margin-top: -40px;
+
 }
 
 .title{
@@ -49,6 +51,7 @@ h2{
   background-image: image-url("melody-logo.png");
   height: 357px;
   width: 614px;
+  margin-top: 140px;
 }
 
 .control-wrapper{
