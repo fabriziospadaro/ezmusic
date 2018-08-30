@@ -137,7 +137,9 @@ function setup() {
 
 function initSpeechRec(){
   speechRec = new p5.SpeechRec(lang,gotSpeech);
-  speechRec.continuous = true;
+  speechRec.rec.continuous = true; // do continuous recognition
+  speechRec.continuous = true; // allow partial
+
   speechRec.rec.onend = errors;
 }
 
