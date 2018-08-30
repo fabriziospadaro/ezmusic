@@ -29,7 +29,7 @@ class Song{
     if(name == "")
       this.url = "";
     else{
-      fetch("https://boiling-lowlands-48913.herokuapp.com/api/v1/getvideourl/"+name)
+      fetch("https://mmelody.herokuapp.com/api/v1/getvideourl/"+name)
         .then(response => response.json())
         .then((data) => {
           this.url = data.infos[0]["url"];
@@ -75,7 +75,6 @@ class PlayList{
       this.Add(song);
       //set the current song to the requested one
       this.setCurrentSong(song);
-      speech.speak("Playing: " + this.current_song.name);
     }
     else
       speech.speak("Hey!Give me the song name!");
@@ -263,6 +262,7 @@ function playVideo(){
   }
   document.getElementById("track-name").innerHTML = playlist.current_song.name.substring(0,21)+"...";
   player.loadVideoById(playlist.current_song.url,0);
+  speech.speak("Playing: " + playlist.current_song.name);
 }
 
 
