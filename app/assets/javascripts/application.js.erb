@@ -34,14 +34,15 @@ class Song{
         .then((data) => {
           this.url = data.infos[0]["url"];
           this.name = data.infos[0]["name"];
-          if(this.callback)
-            this.callback();
+          if(this.callback){
+              this.callback();
+          }
         });
       }
   }
 
   isUrlReady(){
-    return this.url === "";
+    return this.url != "";
   }
 
   setCallback(call){
