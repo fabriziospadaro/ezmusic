@@ -22,14 +22,14 @@
       <h1 id="track-name"></h1>
     </div>
 
-    <div class="player-container">
+    <div id="player-container">
       <div id="player"></div>
+      <div class="slidecontainer">
+        <input type="range" min="1" max="100" value="0" class="slider" id="myRange"
+        oninput="seekTo(this.value)" onchange="seekTo(this.value)" >
+      </div>
     </div>
 
-    <div class="slidecontainer">
-      <input type="range" min="1" max="100" value="0" class="slider" id="myRange"
-      oninput="seekTo(this.value)" onchange="seekTo(this.value)" >
-    </div>
     <div class="time-info">
       <p id="current-time"></p>
       <p id="total-time"></p>
