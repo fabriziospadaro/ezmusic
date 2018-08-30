@@ -31,7 +31,7 @@ class Song{
     else{
       //online "https://mmelody.herokuapp.com/api/v1/getvideourl/"+name
       //offline "http://localhost:3000/api/v1/getvideourl/"+name
-      fetch("http://localhost:3000/api/v1/getvideourl/"+name)
+      fetch("https://mmelody.herokuapp.com/api/v1/getvideourl/"+name)
         .then(response => response.json())
         .then((data) => {
           this.url = data.infos[0]["url"];
