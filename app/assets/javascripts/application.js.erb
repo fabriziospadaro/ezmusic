@@ -189,7 +189,7 @@ function processSentence(sentence){
             .then((dat) => {
               let track_name = dat.results.trackmatches.track[0].name;
               let track_artist = dat.results.trackmatches.track[0].artist;
-              fetch("http://ws.audioscrobbler.com/2.0/?method=track.getsimilar&artist="+track_artist+"&track="+track_name+"&limit=30&api_key=283eb42e49e8b0a3045c0c9edf3666bb&format=json")
+              fetch("https://ws.audioscrobbler.com/2.0/?method=track.getsimilar&artist="+track_artist+"&track="+track_name+"&limit=30&api_key=283eb42e49e8b0a3045c0c9edf3666bb&format=json")
                 .then(response => response.json())
                 .then((date) => {
                   date.similartracks.track
