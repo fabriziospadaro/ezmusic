@@ -3,7 +3,8 @@ Rails.application.routes.draw do
 
   namespace 'api' do
     namespace 'v1' do
-      get 'getvideourl/:name', to: "scraper#get_result"
+      get 'getvideourl/:name', to: "scraper#get_video_urls"
+      get 'getsongslike/:name', to: "scraper#get_songs_like"
     end
   end
 end

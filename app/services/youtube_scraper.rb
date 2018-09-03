@@ -5,6 +5,7 @@ class YoutubeScraper
   def self.scrape(name)
     #first convert in youtube query format
     name.gsub!(" ","+")
+    name.gsub!("%","+")
     #get the document
 
     doc = Nokogiri::HTML(open("https://www.youtube.com/results?sp=EgIQAQ%253D%253D&search_query=#{name}"))

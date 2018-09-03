@@ -15,7 +15,6 @@ class Song{
   constructor(name) {
     this.name = name;
     this.url = "";
-    this.loadUrl(name);
     this.done = false;
     this.callback;
   }
@@ -80,10 +79,22 @@ class PlayList{
       speech.speak("Pardon?");
   }
 
+  startPlaylist(){
+    this.playCurrentSong();
+  }
+
+  playCurrentSong(){
+    this.current_song = this.songs[this.index];
+    this.current_song.loadUrl(this.current_song.name);
+    this.current_song.done = false;
+    this.current_song.setCallback(this.on_play);
+  }
+
   setCurrentSong(song){
       this.current_song = song;
       //since we are playing a new song the current index is the index of the last song
       this.index = this.songs.length;
+      this.current_song.loadUrl(this.current_song.name);
       //reset the done state
       this.current_song.done = false;
       this.current_song.setCallback(this.on_play);
@@ -92,9 +103,7 @@ class PlayList{
   PlayNext(){
     if(this.index+1 < this.songs.length){
       this.index++;
-      this.current_song.done = false;
-      this.current_song = this.songs[this.index];
-      this.Play(new Song(""));
+      this.playCurrentSong();
     }
     else{
       console.log("Reached the end of the playlist");
@@ -173,7 +182,22 @@ function processSentence(sentence){
 
   if(data.bot_called){
     switch(data.verb){
-      case "play": playlist.Play(new Song(data.song_name)); break;
+      case "play":
+        if(data.song_name.includes("songs like") || data.song_name.includes("song like")){
+          fetch("https://mmelody.herokuapp.com/api/v1/getsongslike/"+isolateSongsLike(data.song_name))
+          //fetch("http://localhost:3000/api/v1/getsongslike/"+isolateSongsLike(data.song_name))
+            .then(response => response.json())
+            .then((dat) => {
+              let songs = dat.infos;
+              songs.forEach(function(element) {
+                playlist.Add(new Song(element));
+              });
+              playlist.startPlaylist();
+          });
+        }
+        else
+          playlist.Play(new Song(data.song_name));
+        break;
       case "add": playlist.Add(new Song(data.song_name)); break;
       case "stop": playlist.pauseVideo(); break;
       case "next": playlist.PlayNext(); break;
@@ -219,8 +243,6 @@ function processVerb(string){
 }
 
 function extractSongName(string){
-  //deve essere uguale al nome con cui l'ha chiamato
-  //string = string.replace(botname, "");
   newString = string.split(firstVerbInString(string)).pop();
   if(newString){
     return newString.trim();
@@ -236,6 +258,21 @@ function firstVerbInString(string){
       fond = element
   });
   return fond;
+}
+
+function isolateSongsLike(string){
+  split_string = string.split(" ");
+  fond = "";
+  split_string.forEach(function(element) {
+    if("like".includes(element) && fond == "")
+      fond = element
+  });
+
+  newString = string.split(fond).pop();
+  if(newString){
+    return newString.trim();
+  }
+  console.log(newString);
 }
 
 function initPlayer(){
