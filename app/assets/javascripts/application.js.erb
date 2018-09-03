@@ -94,7 +94,6 @@ class PlayList{
       this.current_song = song;
       //since we are playing a new song the current index is the index of the last song
       this.index = this.songs.length;
-      this.current_song.loadUrl(this.current_song.name);
       //reset the done state
       this.current_song.done = false;
       this.current_song.setCallback(this.on_play);
@@ -184,16 +183,24 @@ function processSentence(sentence){
     switch(data.verb){
       case "play":
         if(data.song_name.includes("songs like") || data.song_name.includes("song like")){
-          fetch("https://mmelody.herokuapp.com/api/v1/getsongslike/"+isolateSongsLike(data.song_name))
-          //fetch("http://localhost:3000/api/v1/getsongslike/"+isolateSongsLike(data.song_name))
+
+         fetch("http://ws.audioscrobbler.com/2.0/?method=track.search&track="+isolateSongsLike(data.song_name)+"&limit=1&api_key=283eb42e49e8b0a3045c0c9edf3666bb&format=json")
             .then(response => response.json())
             .then((dat) => {
-              let songs = dat.infos;
-              songs.forEach(function(element) {
-                playlist.Add(new Song(element));
+              let track_name = dat.results.trackmatches.track[0].name;
+              let track_artist = dat.results.trackmatches.track[0].artist;
+              fetch("http://ws.audioscrobbler.com/2.0/?method=track.getsimilar&artist="+track_artist+"&track="+track_name+"&limit=30&api_key=283eb42e49e8b0a3045c0c9edf3666bb&format=json")
+                .then(response => response.json())
+                .then((date) => {
+                  date.similartracks.track
+                  date.similartracks.track.forEach(function(element) {
+                    playlist.Add(new Song(element.name));
+                  });
+                  playlist.startPlaylist();
               });
-              playlist.startPlaylist();
           });
+
+
         }
         else
           playlist.Play(new Song(data.song_name));
