@@ -1,18 +1,13 @@
 //= require p5.min
 //= require p5.speech
-
 let tag = document.createElement('script');
 tag.src = "https://www.youtube.com/iframe_api";
 let firstScriptTag = document.getElementsByTagName('script')[0];
 firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-let speechRec;
-let speech = new p5.Speech();
-speech.setLang('en-UK');
-speech.setVoice('Google UK English Female');
 
+let speech;
 let player;
-let lang = 'en-US';
-let botname = ["melody","multiplayer","melanie","malady","bloody"];
+let botname = ["melody","multiplayer","melanie","malady","bloody","malayalam","modi","maladie","medically"];
 let paused = true;
 
 class Song{
@@ -125,9 +120,9 @@ let playlist = new PlayList(playVideo,pauseVideo);
 
 function setup() {
   noCanvas();
-
-  initSpeechRec();
+  initAnnyang();
   startSpeechRec();
+  initSpeech();
 
   initPlayer();
   window.setInterval(checkSongProgression,1000);
@@ -137,23 +132,40 @@ function setup() {
   document.getElementById("play").addEventListener("click", toggleVideo);
 }
 
-function initSpeechRec(){
-  speechRec = new p5.SpeechRec(lang,gotSpeech);
-  speechRec.rec.continuous = true; // do continuous recognition
-  speechRec.continuous = true; // allow partial
-
-  speechRec.rec.onend = errors;
+function initAnnyang(){
+  if(annyang) {
+    var commands = {
+      '*all': gotSpeech
+    };
+    annyang.addCommands(commands);
+  }
 }
 
-function gotSpeech() {
-  if(speechRec.resultValue){
-    processSentence(speechRec.resultString);
+function initSpeech(){
+  speech = new p5.Speech();
+  speech.setLang('en-UK');
+  speech.setVoice('Google UK English Female');
+}
+function stopSpeechRec(){
+  annyang.abort();
+  if(document.getElementById("voice-on"))
+    document.getElementById("voice-on").id = 'voice-off';
+}
+
+function startSpeechRec(){
+  annyang.start();
+  if(document.getElementById("voice-off"))
+    document.getElementById("voice-off").id = 'voice-on';
+}
+
+function gotSpeech(text) {
+  if(text){
+    processSentence(text);
   }
   else{
     console.log("the fuck u said?");
   }
 }
-
 
 function processSentence(sentence){
   data = Process(sentence);
@@ -225,26 +237,8 @@ function firstVerbInString(string){
   return fond;
 }
 
-function errors(){
-  if(!playlist.current_song || playlist.current_song.done)
-    startSpeechRec();
-}
-
-function stopSpeechRec(){
-  speechRec.rec.stop();
-  if(document.getElementById("voice-on"))
-    document.getElementById("voice-on").id = 'voice-off';
-  console.log("Stopped listening owner");
-}
-
-function startSpeechRec(){
-  speechRec.rec.start();
-  if(document.getElementById("voice-off"))
-    document.getElementById("voice-off").id = 'voice-on';
-  console.log("Start listening owner");
-}
-
 function initPlayer(){
+
   player = new YT.Player('player', {
     height: '270',
     width: '480',
@@ -255,10 +249,13 @@ function initPlayer(){
       autoplay: 1,
       autohide: 1,
       wmode: 'opaque',
+      rel: 0,
+      start: 0,
       showinfo: 0
     },
     events: {
-      'onReady': onPlayerReady
+      'onReady': onPlayerReady,
+      'onStateChange': onPlayerStateChange
     }
   });
 }
@@ -277,56 +274,59 @@ function playVideo(){
 
 
 function checkSongProgression(){
-  if(playlist.songs.length>0 && player && player.getCurrentTime() > 2 && player.getDuration() == player.getCurrentTime() && !playlist.current_song.done){
-    onSongFinish();
-    playlist.current_song.done = true;
-    playlist.PlayNext();
-  }
-  else if(player && playlist.songs.length>0){
+  if(player && playlist.songs.length>0){
     document.getElementById("current-time").innerHTML = fmtMSS(Math.round(player.getCurrentTime()));
-    document.getElementById("total-time").innerHTML = fmtMSS(Math.round(player.getDuration() - player.getCurrentTime()));
+    document.getElementById("total-time").innerHTML = "-" +fmtMSS(Math.round(player.getDuration() - player.getCurrentTime()));
     document.getElementById("myRange").value = player.getCurrentTime() / player.getDuration() * 100;
   }
 }
 
 function seekTo(a){
-  console.log(a);
   console.log("seeking to:"+player.getDuration()*((a-1)/100));
   player.seekTo(player.getDuration()*((a-1)/100), true);
 }
 
 function fmtMSS(s){return(s-(s%=60))/60+(9<s?':':':0')+s}
 
-
-function onSongFinish(){
-  console.log("finis playing the song");
-  startSpeechRec();
-}
-
 function onPlayerReady(e) {
   player.setPlaybackQuality("small");
-  resumeVideo();
+  player.playVideo();
+}
+function onPlayerStateChange(e){
+  console.log(e.data);
+  if(e.data === 2) //paused
+    pauseVideo();
+  else if(e.data === 1) //play
+    resumeVideo();
+  else if(e.data == 0) { //finished video
+    startSpeechRec();
+    playlist.current_song.done = true;
+    playlist.PlayNext();
+  }
 }
 
 function pauseVideo(){
+  paused = true;
+  if(document.getElementById("pause"))
+    document.getElementById("pause").id = 'play';
   player.pauseVideo();
   startSpeechRec();
 }
 
 function resumeVideo(){
-  player.playVideo()
+  paused = false;
+  if(document.getElementById("play"))
+    document.getElementById("play").id = 'pause';
+  player.playVideo();
   stopSpeechRec();
 }
 
 function toggleVideo(){
   if(!paused){
-    paused = true;
-    document.getElementById("pause").id = 'play';
     pauseVideo();
   }
   else{
-    paused = false;
-    document.getElementById("play").id = 'pause';
     resumeVideo();
   }
+
 }
