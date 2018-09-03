@@ -184,7 +184,7 @@ function processSentence(sentence){
       case "play":
         if(data.song_name.includes("songs like") || data.song_name.includes("song like")){
 
-         fetch("http://ws.audioscrobbler.com/2.0/?method=track.search&track="+isolateSongsLike(data.song_name)+"&limit=1&api_key=283eb42e49e8b0a3045c0c9edf3666bb&format=json")
+         fetch("https://ws.audioscrobbler.com/2.0/?method=track.search&track="+isolateSongsLike(data.song_name)+"&limit=1&api_key=283eb42e49e8b0a3045c0c9edf3666bb&format=json")
             .then(response => response.json())
             .then((dat) => {
               let track_name = dat.results.trackmatches.track[0].name;
