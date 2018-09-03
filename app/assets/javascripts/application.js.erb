@@ -9,7 +9,7 @@ let speech;
 let player;
 let botname = ["melody","multiplayer","melanie","malady","bloody","malayalam","modi","maladie","medically"];
 let paused = true;
-
+let started = false;
 class Song{
 
   constructor(name) {
@@ -26,7 +26,9 @@ class Song{
     else{
       //online "https://mmelody.herokuapp.com/api/v1/getvideourl/"+name
       //offline "http://localhost:3000/api/v1/getvideourl/"+name
+
       fetch("https://mmelody.herokuapp.com/api/v1/getvideourl/"+name)
+      //fetch("http://localhost:3000/api/v1/getvideourl/"+name)
         .then(response => response.json())
         .then((data) => {
           this.url = data.infos[0]["url"];
@@ -68,14 +70,14 @@ class PlayList{
   }
 
   Play(song){
-    if(song.name != ""){
+    if(song.name != "" && song.name.length > 2){
       //add the new song to the playlist
       this.Add(song);
       //set the current song to the requested one
       this.setCurrentSong(song);
     }
     else
-      speech.speak("Hey!Give me the song name!");
+      speech.speak("Pardon?");
   }
 
   setCurrentSong(song){
@@ -101,7 +103,6 @@ class PlayList{
   }
 
   PlayPrevious(){
-    console.log("diocca");
     if(this.index>0){
       this.index--;
       this.current_song.done = false;
@@ -266,6 +267,7 @@ function playVideo(){
     document.getElementById("play").id = 'pause';
     resumeVideo();
   }
+  started = false;
   document.getElementById("track-name").innerHTML = playlist.current_song.name.substring(0,21)+"...";
   document.getElementById("player-container").style.visibility = 'visible';
   player.loadVideoById(playlist.current_song.url,0);
@@ -278,11 +280,15 @@ function checkSongProgression(){
     document.getElementById("current-time").innerHTML = fmtMSS(Math.round(player.getCurrentTime()));
     document.getElementById("total-time").innerHTML = "-" +fmtMSS(Math.round(player.getDuration() - player.getCurrentTime()));
     document.getElementById("myRange").value = player.getCurrentTime() / player.getDuration() * 100;
+    if(!started && player.getCurrentTime() >= 0){
+      seekTo(0);
+      resumeVideo();
+      started = true;
+    }
   }
 }
 
 function seekTo(a){
-  console.log("seeking to:"+player.getDuration()*((a-1)/100));
   player.seekTo(player.getDuration()*((a-1)/100), true);
 }
 
@@ -293,12 +299,12 @@ function onPlayerReady(e) {
   player.playVideo();
 }
 function onPlayerStateChange(e){
-  console.log(e.data);
   if(e.data === 2) //paused
     pauseVideo();
   else if(e.data === 1) //play
     resumeVideo();
   else if(e.data == 0) { //finished video
+    started = false;
     startSpeechRec();
     playlist.current_song.done = true;
     playlist.PlayNext();
