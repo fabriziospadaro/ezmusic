@@ -94,7 +94,7 @@ class PlayList{
       this.current_song = song;
       //since we are playing a new song the current index is the index of the last song
       this.index = this.songs.length;
-      //reset the done state
+      this.current_song.loadUrl(this.current_song.name);
       this.current_song.done = false;
       this.current_song.setCallback(this.on_play);
   }
@@ -182,25 +182,18 @@ function processSentence(sentence){
   if(data.bot_called){
     switch(data.verb){
       case "play":
-        if(data.song_name.includes("songs like") || data.song_name.includes("song like")){
+        if(data.song_name.includes("songs like") || data.song_name.includes("song like") || data.song_name.includes("similar songs") || data.song_name.includes("similar song")){
+          speech.speak("Loading similar songs to " + isolateSongsLike(data.song_name));
 
-         fetch("https://ws.audioscrobbler.com/2.0/?method=track.search&track="+isolateSongsLike(data.song_name)+"&limit=1&api_key=283eb42e49e8b0a3045c0c9edf3666bb&format=json")
+          fetch("https://mmelody.herokuapp.com/api/v1/getsongslike/"+isolateSongsLike(data.song_name))
+          //fetch("http://localhost:3000/api/v1/getsongslike/"+isolateSongsLike(data.song_name))
             .then(response => response.json())
-            .then((dat) => {
-              let track_name = dat.results.trackmatches.track[0].name;
-              let track_artist = dat.results.trackmatches.track[0].artist;
-              fetch("https://ws.audioscrobbler.com/2.0/?method=track.getsimilar&artist="+track_artist+"&track="+track_name+"&limit=30&api_key=283eb42e49e8b0a3045c0c9edf3666bb&format=json")
-                .then(response => response.json())
-                .then((date) => {
-                  date.similartracks.track
-                  date.similartracks.track.forEach(function(element) {
-                    playlist.Add(new Song(element.name));
-                  });
-                  playlist.startPlaylist();
+            .then((data) => {
+              data.infos.forEach(function(element) {
+                playlist.Add(new Song(element["name"]+" "+element["artist"]));
               });
-          });
-
-
+              playlist.startPlaylist();
+            });
         }
         else
           playlist.Play(new Song(data.song_name));
@@ -271,7 +264,7 @@ function isolateSongsLike(string){
   split_string = string.split(" ");
   fond = "";
   split_string.forEach(function(element) {
-    if("like".includes(element) && fond == "")
+    if("like".includes(element) || "to".includes(element) && fond == "")
       fond = element
   });
 
