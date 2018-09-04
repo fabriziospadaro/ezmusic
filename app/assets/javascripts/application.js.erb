@@ -184,16 +184,10 @@ function processSentence(sentence){
       case "play":
         if(data.song_name.includes("songs like") || data.song_name.includes("song like") || data.song_name.includes("similar songs") || data.song_name.includes("similar song")){
           speech.speak("Loading similar songs to " + isolateSongsLike(data.song_name));
-
-          fetch("https://mmelody.herokuapp.com/api/v1/getsongslike/"+isolateSongsLike(data.song_name))
-          //fetch("http://localhost:3000/api/v1/getsongslike/"+isolateSongsLike(data.song_name))
-            .then(response => response.json())
-            .then((data) => {
-              data.infos.forEach(function(element) {
-                playlist.Add(new Song(element["name"]+" "+element["artist"]));
-              });
-              playlist.startPlaylist();
-            });
+          playSimilarTrack(isolateSongsLike(data.song_name));
+        }
+        else if(data.song_name.includes("top tracks") || data.song_name.includes("top track") || data.song_name.includes("best songs") || data.song_name.includes("best tracks")){
+          playTopTracks();
         }
         else
           playlist.Play(new Song(data.song_name));
@@ -207,6 +201,39 @@ function processSentence(sentence){
   else{
     console.log(sentence);
   }
+}
+
+function playSimilarTrack(name){
+  fetch("https://mmelody.herokuapp.com/api/v1/getsongslike/"+name)
+  //fetch("http://localhost:3000/api/v1/getsongslike/"+isolateSongsLike(data.song_name))
+    .then(response => response.json())
+    .then((data) => {
+      let tracks = shuffle(data.infos);
+      tracks.forEach(function(element) {
+        playlist.Add(new Song(element["name"]+" "+element["artist"]));
+      });
+    playlist.startPlaylist();
+  });
+}
+
+function playTopTracks(){
+  fetch("http://ws.audioscrobbler.com/2.0/?method=chart.gettoptracks&api_key=283eb42e49e8b0a3045c0c9edf3666bb&format=json")
+    .then(response => response.json())
+    .then((data) => {
+      let tracks = shuffle(data.tracks.track);
+      tracks.forEach(function(element) {
+        playlist.Add(new Song(element.name+" "+element.artist.name));
+      });
+    playlist.startPlaylist();
+  });
+}
+
+function shuffle(a) {
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
 }
 
 function Process(string){
