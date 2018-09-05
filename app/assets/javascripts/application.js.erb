@@ -63,7 +63,10 @@ class PlayList{
     this.on_pause = on_pause;
     this.interval;
   }
-
+  songsInQueue(){
+    console.log(this.index);
+    return this.index+1 < this.songs.length;
+  }
   Add(song){
     this.songs.push(song);
   }
@@ -85,18 +88,17 @@ class PlayList{
 
   playCurrentSong(){
     this.current_song = this.songs[this.index];
-    this.current_song.loadUrl(this.current_song.name);
     this.current_song.done = false;
     this.current_song.setCallback(this.on_play);
+    this.current_song.loadUrl(this.current_song.name);
   }
 
   setCurrentSong(song){
       this.current_song = song;
-      //since we are playing a new song the current index is the index of the last song
       this.index = this.songs.length;
+      this.current_song.setCallback(this.on_play);
       this.current_song.loadUrl(this.current_song.name);
       this.current_song.done = false;
-      this.current_song.setCallback(this.on_play);
   }
 
   PlayNext(){
@@ -113,9 +115,7 @@ class PlayList{
   PlayPrevious(){
     if(this.index>0){
       this.index--;
-      this.current_song.done = false;
-      this.current_song = this.songs[this.index];
-      this.Play(new Song(""));
+      this.playCurrentSong();
     }
     else{
       console.log("Reached the beginning of the playlist");
@@ -369,9 +369,10 @@ function onPlayerStateChange(e){
     resumeVideo();
   else if(e.data == 0) { //finished video
     started = false;
-    startSpeechRec();
+    pauseVideo();
+    if(playlist.songsInQueue())
+      playlist.PlayNext();
     playlist.current_song.done = true;
-    playlist.PlayNext();
   }
 }
 
