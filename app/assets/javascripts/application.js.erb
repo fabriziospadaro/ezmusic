@@ -1,5 +1,8 @@
 //= require p5.min
 //= require p5.speech
+//= require playlist
+//= require song
+//= require bot_utility
 let tag = document.createElement('script');
 tag.src = "https://www.youtube.com/iframe_api";
 let firstScriptTag = document.getElementsByTagName('script')[0];
@@ -7,122 +10,9 @@ firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
 let speech;
 let player;
-let botname = ["melody","multiplayer","melanie","malady","bloody","malayalam","modi","maladie","medically"];
+let botname = ["melody","multiplayer","melanie","malady","bloody","malayalam","modi","maladie","medically","man"];
 let paused = true;
 let started = false;
-class Song{
-
-  constructor(name) {
-    this.name = name;
-    this.url = "";
-    this.done = false;
-    this.callback;
-  }
-
-  loadUrl(name){
-    if(name == "")
-      this.url = "";
-    else{
-      //online "https://mmelody.herokuapp.com/api/v1/getvideourl/"+name
-      //offline "http://localhost:3000/api/v1/getvideourl/"+name
-
-      fetch("https://mmelody.herokuapp.com/api/v1/getvideourl/"+name)
-      //fetch("http://localhost:3000/api/v1/getvideourl/"+name)
-        .then(response => response.json())
-        .then((data) => {
-          this.url = data.infos[0]["url"];
-          this.name = data.infos[0]["name"];
-          if(this.callback){
-              this.callback();
-          }
-        });
-      }
-  }
-
-  isUrlReady(){
-    return this.url != "";
-  }
-
-  setCallback(call){
-    if(!this.isUrlReady())
-      this.callback = call;
-    else{
-      this.callback = call;
-      this.callback();
-    }
-  }
-}
-
-class PlayList{
-
-  constructor(on_play,on_pause){
-    this.songs = [];
-    this.current_song;
-    this.index = 0;
-    this.on_play = on_play;
-    this.on_pause = on_pause;
-    this.interval;
-  }
-  songsInQueue(){
-    console.log(this.index);
-    return this.index+1 < this.songs.length;
-  }
-  Add(song){
-    this.songs.push(song);
-  }
-
-  Play(song){
-    if(song.name != "" && song.name.length > 2){
-      //add the new song to the playlist
-      this.Add(song);
-      //set the current song to the requested one
-      this.setCurrentSong(song);
-    }
-    else
-      speech.speak("Pardon?");
-  }
-
-  startPlaylist(){
-    this.playCurrentSong();
-  }
-
-  playCurrentSong(){
-    this.current_song = this.songs[this.index];
-    this.current_song.done = false;
-    this.current_song.setCallback(this.on_play);
-    this.current_song.loadUrl(this.current_song.name);
-  }
-
-  setCurrentSong(song){
-      this.current_song = song;
-      this.index = this.songs.length;
-      this.current_song.setCallback(this.on_play);
-      this.current_song.loadUrl(this.current_song.name);
-      this.current_song.done = false;
-  }
-
-  PlayNext(){
-    if(this.index+1 < this.songs.length){
-      this.index++;
-      this.playCurrentSong();
-    }
-    else{
-      console.log("Reached the end of the playlist");
-    }
-
-  }
-
-  PlayPrevious(){
-    if(this.index>0){
-      this.index--;
-      this.playCurrentSong();
-    }
-    else{
-      console.log("Reached the beginning of the playlist");
-    }
-  }
-
-}
 
 let playlist = new PlayList(playVideo,pauseVideo);
 
@@ -182,15 +72,19 @@ function processSentence(sentence){
   if(data.bot_called){
     switch(data.verb){
       case "play":
-        if(data.song_name.includes("songs like") || data.song_name.includes("song like") || data.song_name.includes("similar songs") || data.song_name.includes("similar song")){
-          speech.speak("Loading similar songs to " + isolateSongsLike(data.song_name));
-          playSimilarTrack(isolateSongsLike(data.song_name));
+        switch(recognizeSpecialOperation(data.song_name)){
+          case 0:
+            playlist.Play(new Song(data.song_name));
+            break;
+          case 1:
+            speech.speak("Loading songs like" + isolateSongsLike(data.song_name));
+            playSimilarTrack(isolateSongsLike(data.song_name));
+            break;
+          case 2:
+            speech.speak("Loading top hits");
+            playTopTracks();
+            break;
         }
-        else if(data.song_name.includes("top tracks") || data.song_name.includes("top track") || data.song_name.includes("best songs") || data.song_name.includes("best tracks")){
-          playTopTracks();
-        }
-        else
-          playlist.Play(new Song(data.song_name));
         break;
       case "add": playlist.Add(new Song(data.song_name)); break;
       case "stop": playlist.pauseVideo(); break;
@@ -204,11 +98,13 @@ function processSentence(sentence){
 }
 
 function playSimilarTrack(name){
-  fetch("https://mmelody.herokuapp.com/api/v1/getsongslike/"+name)
-  //fetch("http://localhost:3000/api/v1/getsongslike/"+isolateSongsLike(data.song_name))
+  //fetch("https://mmelody.herokuapp.com/api/v1/getsongslike/"+name)
+  fetch("http://localhost:3000/api/v1/getsongslike/"+isolateSongsLike(data.song_name))
     .then(response => response.json())
     .then((data) => {
       let tracks = shuffle(data.infos);
+      playlist.Clear();
+
       tracks.forEach(function(element) {
         playlist.Add(new Song(element["name"]+" "+element["artist"]));
       });
@@ -235,73 +131,6 @@ function shuffle(a) {
     }
     return a;
 }
-
-function Process(string){
-  string = string.toLowerCase();
-  return data = {
-    bot_called : isBotCalled(string),
-    verb : processVerb(string),
-    song_name : extractSongName(string)
-  };
-}
-
-function isBotCalled(string){
-  let outcome = false;
-   //devo fare che se si prendono i 3/4 delle lettere del nome bot, lui risponde lo stess
-  botname.forEach(function(element) {
-    if(string.includes(element))
-      outcome = true;
-  });
-  return outcome;
-}
-
-verbs = ["stop","pause","next","skip","play","add","queue","start"];
-function processVerb(string){
-  if(string.includes("stop") || string.includes("pause"))
-    return "stop";
-  else if(string.includes("play") || string.includes("start"))
-    return "play";
-  else if(string.includes("add") || string.includes("queue"))
-    return "add";
-  else if(string.includes("next") || string.includes("skip"))
-    return "next";
-  else if(string.includes("previous") || string.includes("back"))
-    return "back";
-}
-
-function extractSongName(string){
-  newString = string.split(firstVerbInString(string)).pop();
-  if(newString){
-    return newString.trim();
-  }
-  return "";
-}
-
-function firstVerbInString(string){
-  split_string = string.split(" ");
-  fond = "";
-  split_string.forEach(function(element) {
-    if(verbs.includes(element) && fond == "")
-      fond = element
-  });
-  return fond;
-}
-
-function isolateSongsLike(string){
-  split_string = string.split(" ");
-  fond = "";
-  split_string.forEach(function(element) {
-    if("like".includes(element) || "to".includes(element) && fond == "")
-      fond = element
-  });
-
-  newString = string.split(fond).pop();
-  if(newString){
-    return newString.trim();
-  }
-  console.log(newString);
-}
-
 function initPlayer(){
 
   player = new YT.Player('player', {
@@ -310,12 +139,9 @@ function initPlayer(){
     videoId: "",
     playerVars: {
       controls: 0,
-      disablekb: 1,
       autoplay: 1,
-      autohide: 1,
       wmode: 'opaque',
       rel: 0,
-      start: 0,
       showinfo: 0
     },
     events: {
@@ -369,9 +195,15 @@ function onPlayerStateChange(e){
     resumeVideo();
   else if(e.data == 0) { //finished video
     started = false;
-    pauseVideo();
+
+    if(document.getElementById("pause"))
+      document.getElementById("pause").id = 'play';
+    player.pauseVideo();
+
     if(playlist.songsInQueue())
       playlist.PlayNext();
+    else
+      startSpeechRec();
     playlist.current_song.done = true;
   }
 }
